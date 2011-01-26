@@ -1,0 +1,64 @@
+
+This repository (will) holds my attempts to develop head pose detection algorithms
+with freenect python bindings. I share it because the steps I am taking
+to get into that goal could be common to other people using libfreenect
+and i didn't found any other public repository of such code.
+So, better sharing and getting early feedback.
+
+Note: I am still preparing the code to be uploaded, be patient.
+Anyway, if you have any comments, just tell me: david garcia at upf edu
+
+Code is mostly python and cython for the sensitive parts.
+I tried to limit the use of libraries to numpy and scipy for processing.
+All the operations use numpy arrays to avoid matrix translations.
+Pygame is used for visualization and interaction, but processing
+code is kept away from such a dependence, and can be substituted.
+
+Currently implemented processing:
+
+- Quick grid panning of the output window using numpy slices
+- Quick resolution downscale using min filter and numpy slices
+- Quick windowing on image sectors using numpy slices
+- Border detection using max/min filters difference on depth.
+- Background removal by keeping non infinite farther depth along frames
+- Border detection using x/y gradient threshold
+- Blob depth segmentation based on a connected component algorithm and either border detection
+- Segmentation (slower) using flood fill algorithm on similar depth
+
+
+So currently the program allows to detect moving components of the scene
+and segmenting them into different blobs.
+
+Implemented algorithms have some limitations:
+
+Background discrimination:
+
+- It requires moving objects to come into the camera or just enter into the scene.
+If you don't move, you are part of the background. If you move an object
+it is part of the foreground.
+- IR shadowed parts of the background (and any surface disrupting IR pattern)
+are never taken as background so the farther depth of any foreground object
+overlaping it is considered the background depth.
+
+Blob detection:
+
+- When two objects touch they are considered the same blob
+- Some blob fusion algorithm needed to join blobs into object
+- As a surface becomes parallel to the sight the blob is splitted
+
+
+
+TODO's:
+- Calibration and rgb/depth registration
+- IR shadow removal
+- Blob fusion
+- Head localization
+- Head pose
+	- Nose candidates detection
+	- Spherical intersection from nose candidates
+	- Symmetry finder
+
+
+
+
+
