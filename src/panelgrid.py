@@ -51,6 +51,7 @@ class PannelGrid :
 def main() :
 	import time
 	import sys
+	import fpscounter
 
 	size = 640,480
 	grid = 2,2
@@ -59,10 +60,8 @@ def main() :
 	panel = PannelGrid("PannelGrid demo", size, grid)
 	
 	x=0
-	firstTic=time.clock()
-	tic = time.clock()
-	nFrames=0
 	stop=False
+	fps = fpscounter.FpsCounter(period=16)
 	while not stop :
 		for event in pygame.event.get() :
 			if event.type == pygame.QUIT : 
@@ -79,19 +78,10 @@ def main() :
 		panel.pane(1,1)[:,:] = panel.packed(0x00+x,0x00+x,0xff-x)
 		panel.pane(0,1)[:,:] = panel.packed(x,x,x)
 		panel.display()
-		sys.stdout.write(".")
-		sys.stdout.flush()
 		x+=1
 		x&=0xff
-		nFrames+=1
-		if nFrames%16 == 0 :
-			toc = time.clock()
-			wallClock = toc - tic
-			tic = toc
-			print
-			print "FPS: %.4f" % (float(nFrames)/wallClock)
-			print "%.2f milliseconds per frame"%(float(wallClock)*1000/nFrames)
-			nFrames=0
+
+		fps.tic()
 
 if __name__ == "__main__" :
 	main()
