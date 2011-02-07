@@ -2,10 +2,9 @@
 
 import ctypes
 import pygame
-from pygame import QUIT, KEYDOWN, K_ESCAPE, K_f
 import numpy as np
-import sys
 import pygame.surfarray
+import videosink
 
 
 class PannelGrid :
@@ -25,8 +24,9 @@ class PannelGrid :
 			0)
 		self.screen = pygame.display.get_surface()
 		self.colsrows = colsrows
-		screenBuffer = pygame.surfarray.pixels2d(self.screen)
-		self.splits = [np.vsplit(v,self.colsrows[0]) for v in np.hsplit(screenBuffer,self.colsrows[1])]
+		self.screenBuffer = pygame.surfarray.pixels2d(self.screen)
+		self.splits = [np.vsplit(v,self.colsrows[0]) for v in np.hsplit(self.screenBuffer,self.colsrows[1])]
+		self.videoSink = None
 
 	def pane(self, col, row) :
 		"""Returns the numpy matrix for a given pane"""
@@ -36,12 +36,21 @@ class PannelGrid :
 		return self.splits
 	def display(self) :
 		"""Dumps the panes to the actual window"""
+		if self.videoSink : self.videoSink.run(self.screenBuffer)
+#		if self.videoSink : self.videoSink.run(self.pane(0,0))
 		pygame.display.flip()
 	def packed(self, r,g,b) :
 		return ctypes.c_uint32(sum(c<<shift for c,shift in zip((r,g,b), self.screen.get_shifts())))
+	def toggle_video_capture(self) :
+		if self.videoSink :
+			self.videoSink.close()
+			self.videoSink = None
+			return
+		self.videoSink = videosink.VideoSink(self.screenBuffer.shape, "output",rate=5)
 
 def main() :
 	import time
+	import sys
 
 	size = 640,480
 	grid = 2,2
@@ -56,13 +65,15 @@ def main() :
 	stop=False
 	while not stop :
 		for event in pygame.event.get() :
-			if event.type == QUIT : 
+			if event.type == pygame.QUIT : 
 				stop = True
-			if event.type == KEYDOWN  :
-				if event.key == K_ESCAPE :
+			if event.type == pygame.KEYDOWN  :
+				if event.key == pygame.K_ESCAPE :
 					stop = True
-				if( event.key == K_f ):
+				if( event.key == pygame.K_f ):
 				   pygame.display.toggle_fullscreen()
+				if( event.key == pygame.K_v ):
+				   panel.toggle_video_capture()
 		panel.pane(0,0)[:,:] = panel.packed(0xff-x,0x00+x,0x00+x)
 		panel.pane(1,0)[:,:] = panel.packed(0x00+x,0xff-x,0x00+x)
 		panel.pane(1,1)[:,:] = panel.packed(0x00+x,0x00+x,0xff-x)
@@ -72,14 +83,15 @@ def main() :
 		sys.stdout.flush()
 		x+=1
 		x&=0xff
-		toc = time.clock()
-#		print "%2.5f"%(toc-tic)
-		tic = toc
 		nFrames+=1
-	wallClock = time.clock()-firstTic
-	print
-	print "FPS: %.4f" % (float(nFrames)/wallClock)
-	print "%.2f milliseconds per frame"%(float(wallClock)*1000/nFrames)
+		if nFrames%16 == 0 :
+			toc = time.clock()
+			wallClock = toc - tic
+			tic = toc
+			print
+			print "FPS: %.4f" % (float(nFrames)/wallClock)
+			print "%.2f milliseconds per frame"%(float(wallClock)*1000/nFrames)
+			nFrames=0
 
 if __name__ == "__main__" :
 	main()
