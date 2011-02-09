@@ -1,5 +1,9 @@
 #!/usr/bin/python
 
+# enables runtime compilation of pyx modules
+import pyximport; pyximport.install()
+import colormap
+
 import fpscounter
 import pygame
 import panelgrid
@@ -69,7 +73,6 @@ panel = panelgrid.PannelGrid("kinect view", size, (2,1))
 (output_L, output_R),
 ) = panel.panes()
 
-
 import scipy.ndimage.filters as ft
 
 rgb_packed  = np.zeros(size, np.uint32)
@@ -80,6 +83,7 @@ showIr = False
 fps = fpscounter.FpsCounter(period=16)
 
 while not finnish :
+	# 8ms
 	depth, timestamp = freenect.sync_get_depth()
 	depth = depth.swapaxes(0,1)
 #	depth = ft.minimum_filter(depth, size=3)
@@ -89,17 +93,17 @@ while not finnish :
 		ir = ir.swapaxes(0,1)
 		ir = ir[::downsampling,::downsampling]
 	else :
+		# 12ms
 		rgb, timestamp2 = freenect.sync_get_video()
 		rgb = rgb.swapaxes(0,1)
 		rgb = rgb[::downsampling,::downsampling,:]
 
-
-	mapToColor(depth, output_R, depthColorPalete, 0x000000)
+	# 12 ms, 18ms
+	colormap.mapToColor(depth, output_R, colormap.depthColorPalete, 0x000000)
 	if showIr :
-		mapToColor(ir, output_L, greyScale)
+		colormap.mapToColor(ir, output_L, colormap.greyScale)
 	else:
-		packArray(rgb, rgb_packed)
-		output_L[...] = rgb_packed
+		colormap.packArray(rgb, output_L) # 5ms, 7ms
 
 	panel.display()
 
@@ -122,9 +126,5 @@ while not finnish :
 print "Stopping kinect"
 freenect.sync_stop()
 print "Stopping pygame"
-
-
-
-
 
 
