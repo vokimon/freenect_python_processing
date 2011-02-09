@@ -27,24 +27,26 @@ class PannelGrid :
 			0)
 		self.screen = pygame.display.get_surface()
 		self.colsrows = colsrows
-		self.screenBuffer = pygame.surfarray.pixels2d(self.screen)
-		self.splits = [np.vsplit(v,self.colsrows[0]) for v in np.hsplit(self.screenBuffer,self.colsrows[1])]
+		self.screenBuffer = pygame.surfarray.pixels2d(self.screen).swapaxes(0,1)
+		self.splits = [np.hsplit(v,self.colsrows[0]) for v in np.vsplit(self.screenBuffer,self.colsrows[1])]
 		self.videoSink = None
 		self.letterR = np.array([[c!=" " for c in row] for row in [
 			"******* ",
-			"*      *",
-			"*      *",
+			"********",
+			"**    **",
+			"**   ***",
 			"******* ",
-			"*    *  ",
-			"*     * ",
-			"*      *",
-			"*      *",
-		]], dtype=bool).swapaxes(1,0)
+			"******  ",
+			"**  *** ",
+			"**   ***",
+			"**    **",
+			"**    **",
+		]], dtype=bool)
 		self.blink = 0
 
-	def pane(self, col, row) :
+	def pane(self, row, col) :
 		"""Returns the numpy matrix for a given pane"""
-		return self.splits[col][row]
+		return self.splits[row][col]
 	def panes(self) :
 		"""Returns a matrix of all panes matrix"""
 		return self.splits
@@ -53,7 +55,9 @@ class PannelGrid :
 		if self.videoSink :
 			self.videoSink.run(self.screenBuffer)
 			if not self.blink & 0x08 :
-				self.screenBuffer[-16:-8,8:16][self.letterR] = 0x00ff0000
+				self.screenBuffer[5:21,-19:-5] = 0x00000000
+				self.screenBuffer[6:20,-18:-6] = 0x00ef0000
+				self.screenBuffer[8:18,-16:-8][self.letterR] = 0x00000000
 			self.blink+=1
 		pygame.display.flip()
 	def packed(self, r,g,b) :
@@ -63,7 +67,7 @@ class PannelGrid :
 			self.videoSink.close()
 			self.videoSink = None
 			return
-		self.videoSink = videosink.VideoSink(self.screenBuffer.shape, "output",rate=5)
+		self.videoSink = videosink.VideoSink(self.screenBuffer.shape[::-1], "output",rate=5)
 
 def main() :
 	import time
@@ -78,6 +82,7 @@ def main() :
 	
 	x=0
 	stop=False
+	singleAcces=False
 	fps = fpscounter.FpsCounter(period=16)
 	while not stop :
 		for event in pygame.event.get() :
@@ -90,10 +95,27 @@ def main() :
 				   pygame.display.toggle_fullscreen()
 				if( event.key == pygame.K_v ):
 				   panel.toggle_video_capture()
-		panel.pane(0,0)[:,:] = panel.packed(0xff-x,0x00+x,0x00+x)
-		panel.pane(1,0)[:,:] = panel.packed(0x00+x,0xff-x,0x00+x)
-		panel.pane(1,1)[:,:] = panel.packed(0x00+x,0x00+x,0xff-x)
-		panel.pane(0,1)[:,:] = panel.packed(x,x,x)
+				if( event.key == pygame.K_s ):
+					singleAcces = not singleAcces
+					print "Switching to", "indexed mode" if singleAcces else "multipane mode"
+		if singleAcces : 
+			panel.pane(0,0)[:,:] = panel.packed(0xff-x,0x00+x,0x00+x)
+			panel.pane(1,0)[:,:] = panel.packed(0x00+x,0xff-x,0x00+x)
+			panel.pane(1,1)[:,:] = panel.packed(0x00+x,0x00+x,0xff-x)
+			panel.pane(0,1)[:,:] = panel.packed(x,x,x)
+			panel.pane(0,1)[:10,:] = panel.packed(0x00,0x00,0xaf)
+			panel.pane(0,1)[:,:10] = panel.packed(0x00,0xaf,0x00)
+		else :
+			(
+			(NW,NE),
+			(SW,SE),
+			) = panel.panes()
+			NW[:,:] = panel.packed(0xff-x,0x00+x,0x00+x)
+			SW[:,:] = panel.packed(0x00+x,0xff-x,0x00+x)
+			SE[:,:] = panel.packed(0x00+x,0x00+x,0xff-x)
+			NE[:,:] = panel.packed(x,x,x)
+			NE[:10,:] = panel.packed(0x00,0x00,0xaf)
+			NE[:,:10] = panel.packed(0x00,0xaf,0x00)
 		panel.display()
 		x+=1
 		x&=0xff

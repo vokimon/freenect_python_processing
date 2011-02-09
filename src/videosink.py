@@ -16,9 +16,9 @@ class VideoSink(object) :
 		self.p = subprocess.Popen(cmdstring, stdin=subprocess.PIPE, shell=False)
 
 	def run(self, image) :
-		assert image.shape == self.size
+		assert image.shape == self.size[::-1]
 #		image.swapaxes(0,1).tofile(self.p.stdin) # should be faster but it is indeed slower
-		self.p.stdin.write(image.swapaxes(0,1).tostring())
+		self.p.stdin.write(image.tostring())
 	def close(self) :
 		self.p.stdin.close()
 

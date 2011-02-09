@@ -53,21 +53,21 @@ cdef map8ToColor(
 	cdef np.uint16_t paletteLength = len(palette)
 	cdef np.int32_t infiniteColorValue
 	if infiniteColor is  None :
-		for y in xrange(input.shape[1]) :
-			for x in xrange(input.shape[0]) :
-				output[x,y] = palette[input[x,y]%paletteLength]
+		for y in xrange(input.shape[0]) :
+			for x in xrange(input.shape[1]) :
+				output[y,x] = palette[input[y,x]%paletteLength]
 	else :
 		infiniteColorValue = infiniteColor
-		for y in xrange(input.shape[1]) :
-			for x in xrange(input.shape[0]) :
-				output[x,y] = (
+		for y in xrange(input.shape[0]) :
+			for x in xrange(input.shape[1]) :
+				output[y,x] = (
 					infiniteColorValue
-					if input[x,y] == infiniteDepth
-					else palette[input[x,y]%paletteLength]
+					if input[y,x] == infiniteDepth
+					else palette[input[y,x]%paletteLength]
 					)
 	if drawScale :
-		for y in xrange(input.shape[1]) :
-			output[-10:-1,y] = palette[y*len(palette)/input.shape[1]]
+		for y in xrange(input.shape[0]) :
+			output[-1-y,-10:-1] = palette[y*len(palette)/input.shape[0]]
 
 cdef map16ToColor(
 		np.ndarray[np.uint16_t, ndim=2] input,
@@ -81,21 +81,21 @@ cdef map16ToColor(
 	cdef np.uint16_t paletteLength = len(palette)
 	cdef np.int32_t infiniteColorValue
 	if infiniteColor is None :
-		for y in xrange(input.shape[1]) :
-			for x in xrange(input.shape[0]) :
-				output[x,y] = palette[input[x,y]%paletteLength]
+		for y in xrange(input.shape[0]) :
+			for x in xrange(input.shape[1]) :
+				output[y,x] = palette[input[y,x]%paletteLength]
 	else:
 		infiniteColorValue = infiniteColor
-		for y in xrange(input.shape[1]) :
-			for x in xrange(input.shape[0]) :
-				output[x,y] = (
+		for y in xrange(input.shape[0]) :
+			for x in xrange(input.shape[1]) :
+				output[y,x] = (
 					infiniteColorValue
-					if input[x,y] == infiniteDepth
-					else palette[input[x,y]%paletteLength]
+					if input[y,x] == infiniteDepth
+					else palette[input[y,x]%paletteLength]
 					)
 	if drawScale :
-		for y in xrange(input.shape[1]) :
-			output[-10:-1,-1-y] = palette[y*len(palette)/input.shape[1]]
+		for y in xrange(input.shape[0]) :
+			output[-1-y,-10:-1] = palette[y*len(palette)/input.shape[0]]
 
 def mapToColor(
 		input,
@@ -121,14 +121,14 @@ cpdef packArray(
 	cdef Py_ssize_t i,j
 	cdef np.uint8_t r,g,b
 	cdef np.uint32_t color
-	for j in xrange(unpacked.shape[1]) :
-		for i in xrange(unpacked.shape[0]) :
-			color = unpacked[i,j,0] # r
+	for y in xrange(unpacked.shape[0]) :
+		for x in xrange(unpacked.shape[1]) :
+			color = unpacked[y,x,0] # r
 			color = color << 8
-			color += unpacked[i,j,1] # g
+			color += unpacked[y,x,1] # g
 			color = color << 8
-			color += unpacked[i,j,2] # b
-			packed[i,j] = color
+			color += unpacked[y,x,2] # b
+			packed[y,x] = color
 
 
 

@@ -33,17 +33,14 @@ fps = fpscounter.FpsCounter(period=16)
 while not finnish :
 	# 8ms
 	depth, timestamp = freenect.sync_get_depth()
-	depth = depth.swapaxes(0,1)
 #	depth = ft.minimum_filter(depth, size=3)
 	depth = depth[::downsampling,::downsampling]
 	if showIr :
 		ir, timestamp3 = freenect.sync_get_video(format=freenect.VIDEO_IR_8BIT)
-		ir = ir.swapaxes(0,1)
 		ir = ir[::downsampling,::downsampling]
 	else :
 		# 12ms
 		rgb, timestamp2 = freenect.sync_get_video()
-		rgb = rgb.swapaxes(0,1)
 		rgb = rgb[::downsampling,::downsampling,:]
 
 	# 12 ms, 18ms
