@@ -11,6 +11,9 @@ class PannelGrid :
 	"""
 	This class provides abstraction to a pygame window surface
 	splitted into many panes of a given size forming a grid.
+	Axis and sizes are ordered x,y or cols,rows which, is more 
+	natural to resolutions, but strides are smaller on x, so 
+	loops will do better caching for each row then for each col.
 	"""
 	def __init__(self, name, paneSize, colsrows) :
 		fullsize = [a*b for a,b in zip(paneSize,colsrows)]
@@ -27,6 +30,17 @@ class PannelGrid :
 		self.screenBuffer = pygame.surfarray.pixels2d(self.screen)
 		self.splits = [np.vsplit(v,self.colsrows[0]) for v in np.hsplit(self.screenBuffer,self.colsrows[1])]
 		self.videoSink = None
+		self.letterR = np.array([[c!=" " for c in row] for row in [
+			"******* ",
+			"*      *",
+			"*      *",
+			"******* ",
+			"*    *  ",
+			"*     * ",
+			"*      *",
+			"*      *",
+		]], dtype=bool).swapaxes(1,0)
+		self.blink = 0
 
 	def pane(self, col, row) :
 		"""Returns the numpy matrix for a given pane"""
@@ -36,8 +50,11 @@ class PannelGrid :
 		return self.splits
 	def display(self) :
 		"""Dumps the panes to the actual window"""
-		if self.videoSink : self.videoSink.run(self.screenBuffer)
-#		if self.videoSink : self.videoSink.run(self.pane(0,0))
+		if self.videoSink :
+			self.videoSink.run(self.screenBuffer)
+			if not self.blink & 0x08 :
+				self.screenBuffer[-16:-8,8:16][self.letterR] = 0x00ff0000
+			self.blink+=1
 		pygame.display.flip()
 	def packed(self, r,g,b) :
 		return ctypes.c_uint32(sum(c<<shift for c,shift in zip((r,g,b), self.screen.get_shifts())))
