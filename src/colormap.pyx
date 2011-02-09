@@ -25,6 +25,14 @@ signPalette = np.array([
 	], dtype=np.int32)
 signPalette[0]=0x0
 
+# blob palette aims to have quite different colors for close numbers
+blobPalette = np.array([
+	pack(((x&0x03)<<6)+0x3f, (x&0x0C<<4)+0x3f, (x&0x30<<2)+0x3f)
+	for x in xrange(256)]
+	, np.int32)
+blobPalette[0] = 0x000000
+
+
 # requires infiniteDepth to be maped to 0
 # first segment is for too close depth, they may appear 
 # but do not use dynamic range for them just a different scale.
