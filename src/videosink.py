@@ -9,14 +9,14 @@ class VideoSink(object) :
 		cmdstring  = ('mencoder',
 			'/dev/stdin',
 			'-demuxer', 'rawvideo',
-			'-rawvideo', 'w=%i:h=%i'%size+":fps=%i:format=%s"%(rate,byteorder),
+			'-rawvideo', 'w=%i:h=%i'%size[::-1]+":fps=%i:format=%s"%(rate,byteorder),
 			'-o', filename+'.avi',
 			'-ovc', 'lavc',
 			)
 		self.p = subprocess.Popen(cmdstring, stdin=subprocess.PIPE, shell=False)
 
 	def run(self, image) :
-		assert image.shape == self.size[::-1]
+		assert image.shape == self.size
 #		image.swapaxes(0,1).tofile(self.p.stdin) # should be faster but it is indeed slower
 		self.p.stdin.write(image.tostring())
 	def close(self) :
@@ -27,7 +27,7 @@ if __name__ == "__main__" :
 	import sys
 	W,H = 480,360
 	rate = 40
-	video = VideoSink((W,H), "test", rate=rate, byteorder="bgra")
+	video = VideoSink((H,W), "test", rate=rate, byteorder="bgra")
 	image = np.ones((H,W), np.uint32)
 	for color in (
 		0x00ff0000, # red

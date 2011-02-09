@@ -67,7 +67,7 @@ class PannelGrid :
 			self.videoSink.close()
 			self.videoSink = None
 			return
-		self.videoSink = videosink.VideoSink(self.screenBuffer.shape[::-1], "output",rate=5)
+		self.videoSink = videosink.VideoSink(self.screenBuffer.shape, "output",rate=5)
 
 def main() :
 	import time
